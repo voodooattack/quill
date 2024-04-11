@@ -1,7 +1,12 @@
 use std::f32::consts::PI;
 
 use bevy::{
-    prelude::*, render::{camera::Viewport, render_asset::RenderAssetUsages, render_resource::{Extent3d, TextureDimension, TextureFormat}}
+    prelude::*,
+    render::{
+        camera::Viewport,
+        render_asset::RenderAssetUsages,
+        render_resource::{Extent3d, TextureDimension, TextureFormat},
+    },
 };
 
 use crate::viewport::*;
@@ -12,10 +17,6 @@ const X_EXTENT: f32 = 14.5;
 /// A marker component for our shapes so we can query them separately from the ground plane
 #[derive(Component)]
 pub(crate) struct Shape;
-
-/// Marker which identifies the primary camera.
-#[derive(Component)]
-pub struct PrimaryCamera;
 
 pub fn setup(
     mut commands: Commands,
@@ -83,7 +84,6 @@ pub fn setup(
         },
         PrimaryCamera,
     ));
-
 }
 
 pub(crate) fn update_viewport_inset(
@@ -141,11 +141,14 @@ pub(crate) fn update_camera_viewport(
     let vh = (wh - top - bottom).max(1.);
 
     let (mut camera, mut projection) = camera_query.single_mut();
-    camera.viewport = Some(Viewport {
+    let viewport = Viewport {
         physical_position: UVec2::new(left as u32, top as u32),
-        physical_size: UVec2::new(vw as u32, vh as u32),
+        physical_size: UVec2::new(vw as u32, vh as u32)
+            .min(UVec2::new(ww as u32, wh as u32) - UVec2::new(left as u32, top as u32)),
         ..default()
-    });
+    };
+
+    camera.viewport = Some(viewport);
 
     if let Projection::Perspective(ref mut perspective) = *projection {
         let aspect = vw / vh;
@@ -187,6 +190,6 @@ fn uv_debug_texture() -> Image {
         TextureDimension::D2,
         &texture_data,
         TextureFormat::Rgba8UnormSrgb,
-        RenderAssetUsages::default()
+        RenderAssetUsages::default(),
     )
 }

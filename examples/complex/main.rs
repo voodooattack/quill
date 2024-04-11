@@ -15,6 +15,7 @@ use bevy::{
     asset::io::{file::FileAssetReader, AssetSource},
     prelude::*,
     ui,
+    window::WindowResized,
 };
 use bevy_grackle::{
     events::{Clicked, MenuAction, MenuEvent, SplitterEvent, ValueChanged},
@@ -76,13 +77,16 @@ fn main() {
         .add_event::<RequestClose>()
         .add_systems(
             Update,
+            (bevy::window::close_on_esc, test_scene::rotate, handle_tab),
+        )
+        .add_systems(
+            PreUpdate,
             (
-                bevy::window::close_on_esc,
-                test_scene::rotate,
                 test_scene::update_viewport_inset,
                 test_scene::update_camera_viewport,
-                handle_tab,
-            ),
+            )
+                .chain()
+                .run_if(on_event::<WindowResized>()),
         )
         .run();
 }
@@ -231,7 +235,7 @@ fn setup_view_root(mut commands: Commands) {
     commands.spawn((
         ViewHandle::new(ui_main, ()),
         Name::new("ViewRoot"),
-        TargetCamera(camera2d)
+        TargetCamera(camera2d),
     ));
 }
 
